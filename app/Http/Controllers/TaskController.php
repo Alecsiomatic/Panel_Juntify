@@ -38,11 +38,14 @@ class TaskController extends Controller
     {
         try {
             $juntifyUser = Session::get('juntify_user');
-            $userId = $juntifyUser['id'] ?? null;
+            $userId = $juntifyUser['id'] ?? null; // UUID string
 
             if (!$userId) {
                 return response()->json(['error' => 'Usuario no autenticado'], 401);
             }
+
+            // Log para debugging
+            Log::info('Obteniendo tareas para usuario', ['user_id' => $userId]);
 
             $filters = [
                 'status' => $request->input('status'),

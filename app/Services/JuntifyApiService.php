@@ -1800,11 +1800,11 @@ class JuntifyApiService
     /**
      * Get tasks for a user
      * 
-     * @param int $userId ID del usuario
+     * @param string $userId UUID del usuario
      * @param array $filters Filtros opcionales
      * @return array
      */
-    public function getTasks(int $userId, array $filters = []): array
+    public function getTasks(string $userId, array $filters = []): array
     {
         try {
             $params = ['user_id' => $userId];
