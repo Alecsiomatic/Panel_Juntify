@@ -1792,4 +1792,194 @@ class JuntifyApiService
             ];
         }
     }
+
+    // ==========================================
+    // TASK API METHODS
+    // ==========================================
+
+    /**
+     * Get tasks for a user
+     * 
+     * @param int $userId ID del usuario
+     * @param array $filters Filtros opcionales
+     * @return array
+     */
+    public function getTasks(int $userId, array $filters = []): array
+    {
+        try {
+            $params = ['user_id' => $userId];
+            
+            // Add optional filters
+            foreach (['status', 'priority', 'meeting_id', 'start_date', 'end_date', 'limit', 'offset'] as $key) {
+                if (!empty($filters[$key])) {
+                    $params[$key] = $filters[$key];
+                }
+            }
+
+            $response = Http::timeout(15)->get("{$this->baseUrl}/ddu/tasks", $params);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json()
+                ];
+            }
+
+            Log::warning('Error al obtener tareas de Juntify', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'Error al obtener tareas',
+                'status' => $response->status()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Excepción al obtener tareas: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => 'Error de conexión con Juntify: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Create a new task
+     * 
+     * @param array $data Task data
+     * @return array
+     */
+    public function createTask(array $data): array
+    {
+        try {
+            $response = Http::timeout(15)->post("{$this->baseUrl}/ddu/tasks", $data);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json()
+                ];
+            }
+
+            $errorData = $response->json();
+            
+            return [
+                'success' => false,
+                'error' => $errorData['message'] ?? 'Error al crear tarea',
+                'errors' => $errorData['errors'] ?? [],
+                'status' => $response->status()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Excepción al crear tarea: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => 'Error de conexión con Juntify: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Update a task
+     * 
+     * @param int $taskId Task ID
+     * @param array $data Task data to update
+     * @return array
+     */
+    public function updateTask(int $taskId, array $data): array
+    {
+        try {
+            $response = Http::timeout(15)->put("{$this->baseUrl}/ddu/tasks/{$taskId}", $data);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json()
+                ];
+            }
+
+            $errorData = $response->json();
+            
+            return [
+                'success' => false,
+                'error' => $errorData['message'] ?? 'Error al actualizar tarea',
+                'status' => $response->status()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Excepción al actualizar tarea: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => 'Error de conexión con Juntify: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Delete a task
+     * 
+     * @param int $taskId Task ID
+     * @return array
+     */
+    public function deleteTask(int $taskId): array
+    {
+        try {
+            $response = Http::timeout(15)->delete("{$this->baseUrl}/ddu/tasks/{$taskId}");
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json()
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error' => $response->json()['message'] ?? 'Error al eliminar tarea',
+                'status' => $response->status()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Excepción al eliminar tarea: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => 'Error de conexión con Juntify: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Mark a task as completed
+     * 
+     * @param int $taskId Task ID
+     * @return array
+     */
+    public function completeTask(int $taskId): array
+    {
+        try {
+            $response = Http::timeout(15)->post("{$this->baseUrl}/ddu/tasks/{$taskId}/complete");
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json()
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error' => $response->json()['message'] ?? 'Error al completar tarea',
+                'status' => $response->status()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Excepción al completar tarea: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => 'Error de conexión con Juntify: ' . $e->getMessage()
+            ];
+        }
+    }
 }

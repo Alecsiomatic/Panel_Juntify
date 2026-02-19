@@ -11,6 +11,7 @@ use App\Http\Controllers\JuntifyMeetingController;
 use App\Http\Controllers\MembersManagementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +39,17 @@ Route::middleware(['juntify.auth'])->group(function () {
     Route::get('/download/audio/{meeting}', [App\Http\Controllers\JuntifyDownloadController::class, 'downloadAudio'])->name('download.audio');
     Route::get('/download/ju/{meeting}', [App\Http\Controllers\JuntifyDownloadController::class, 'downloadJu'])->name('download.ju');
     Route::get('/meeting-details/{transcriptionId}', [JuntifyMeetingController::class, 'showDetails'])->name('meetings.details');
+
+    // Tareas - Kanban y Calendario
+    Route::prefix('tareas')->name('tareas.')->group(function () {
+        Route::get('/', [TaskController::class, 'index'])->name('index');
+        Route::get('/list', [TaskController::class, 'list'])->name('list');
+        Route::post('/', [TaskController::class, 'store'])->name('store');
+        Route::put('/{taskId}', [TaskController::class, 'update'])->name('update');
+        Route::delete('/{taskId}', [TaskController::class, 'destroy'])->name('destroy');
+        Route::post('/{taskId}/complete', [TaskController::class, 'complete'])->name('complete');
+    });
+
     Route::get('/grupos', [MeetingGroupController::class, 'index'])->name('grupos.index');
     Route::post('/grupos', [MeetingGroupController::class, 'store'])->name('grupos.store');
     Route::delete('/grupos/{group}', [MeetingGroupController::class, 'destroy'])->name('grupos.destroy');
