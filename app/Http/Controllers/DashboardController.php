@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Services\JuntifyApiService;
 use App\Services\Meetings\JuntifyMeetingService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
@@ -80,7 +82,118 @@ class DashboardController extends Controller
             'user_role' => $userRole
         ];
 
-        return view('dashboard.index', compact('stats'));
+        // 4. Generar actividad reciente
+        $recentActivity = $this->getRecentActivity($juntifyUser, $juntifyApiService, $userId);
+
+        return view('dashboard.index', compact('stats', 'recentActivity'));
+    }
+
+    /**
+     * Obtener actividad reciente del usuario
+     */
+    private function getRecentActivity(array $juntifyUser, JuntifyApiService $juntifyApiService, ?string $userId): array
+    {
+        $activity = [];
+
+        // 1. Login actual
+        $authTime = Session::get('juntify_auth_time');
+        if ($authTime) {
+            $loginTime = \Carbon\Carbon::createFromTimestamp($authTime);
+            $activity[] = [
+                'type' => 'login',
+                'title' => 'Sesión iniciada',
+                'subtitle' => $loginTime->diffForHumans(),
+                'bg_color' => 'bg-blue-100',
+                'icon_color' => 'text-blue-600',
+                'timestamp' => $authTime
+            ];
+        }
+
+        // 2. Últimas reuniones
+        if ($userId) {
+            try {
+                $meetingsResult = $juntifyApiService->getUserMeetings($userId, ['limit' => 3, 'order_by' => 'created_at', 'order_dir' => 'desc']);
+                $meetings = [];
+                
+                if ($meetingsResult['success']) {
+                    if (isset($meetingsResult['data']['meetings'])) {
+                        $meetings = $meetingsResult['data']['meetings'];
+                    } elseif (isset($meetingsResult['data']['data'])) {
+                        $meetings = $meetingsResult['data']['data'];
+                    } elseif (is_array($meetingsResult['data'])) {
+                        $meetings = array_slice($meetingsResult['data'], 0, 3);
+                    }
+                }
+
+                foreach ($meetings as $meeting) {
+                    $meetingDate = $meeting['created_at'] ?? $meeting['date'] ?? null;
+                    $meetingTitle = $meeting['title'] ?? $meeting['name'] ?? 'Reunión';
+                    
+                    $subtitle = 'Sin fecha';
+                    if ($meetingDate) {
+                        try {
+                            $subtitle = \Carbon\Carbon::parse($meetingDate)->diffForHumans();
+                        } catch (\Exception $e) {
+                            $subtitle = $meetingDate;
+                        }
+                    }
+
+                    $activity[] = [
+                        'type' => 'meeting',
+                        'title' => 'Reunión: ' . \Str::limit($meetingTitle, 30),
+                        'subtitle' => $subtitle,
+                        'bg_color' => 'bg-green-100',
+                        'icon_color' => 'text-green-600',
+                        'timestamp' => strtotime($meetingDate ?? 'now')
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error al obtener reuniones recientes: ' . $e->getMessage());
+            }
+
+            // 3. Últimas tareas completadas
+            try {
+                $recentTasks = \DB::connection('juntify')
+                    ->table('tasks_laravel')
+                    ->where('username', $juntifyUser['username'] ?? '')
+                    ->orderBy('updated_at', 'desc')
+                    ->limit(2)
+                    ->get();
+
+                foreach ($recentTasks as $task) {
+                    $taskDate = $task->updated_at ?? $task->created_at ?? null;
+                    $subtitle = 'Sin fecha';
+                    if ($taskDate) {
+                        try {
+                            $subtitle = \Carbon\Carbon::parse($taskDate)->diffForHumans();
+                        } catch (\Exception $e) {
+                            $subtitle = $taskDate;
+                        }
+                    }
+
+                    $status = ($task->progreso ?? 0) >= 100 ? 'Completada' : 'En progreso (' . ($task->progreso ?? 0) . '%)';
+
+                    $activity[] = [
+                        'type' => 'task',
+                        'title' => 'Tarea: ' . \Str::limit($task->tarea ?? 'Sin título', 25),
+                        'subtitle' => $status . ' - ' . $subtitle,
+                        'bg_color' => ($task->progreso ?? 0) >= 100 ? 'bg-green-100' : 'bg-yellow-100',
+                        'icon_color' => ($task->progreso ?? 0) >= 100 ? 'text-green-600' : 'text-yellow-600',
+                        'timestamp' => strtotime($taskDate ?? 'now')
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error al obtener tareas recientes: ' . $e->getMessage());
+            }
+        }
+
+        // Ordenar por timestamp (más reciente primero)
+        usort($activity, function ($a, $b) {
+            return ($b['timestamp'] ?? 0) - ($a['timestamp'] ?? 0);
+        });
+
+        // Limitar a 5 elementos
+        return array_slice($activity, 0, 5);
     }
 
     /**
