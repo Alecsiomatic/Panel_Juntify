@@ -1033,11 +1033,22 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadTasks() {
         try {
             const response = await fetch(API.list);
+            
+            if (!response.ok) {
+                console.warn('API no disponible, mostrando vista vacía');
+                tasks = [];
+                renderKanban();
+                return;
+            }
+            
             const data = await response.json();
             
             if (data.data && data.data.tasks) {
                 tasks = data.data.tasks;
                 updateStats(data.data.stats || {});
+            } else if (data.tasks) {
+                tasks = data.tasks;
+                updateStats(data.stats || {});
             } else if (Array.isArray(data)) {
                 tasks = data;
             } else {
@@ -1049,7 +1060,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderCalendar();
             }
         } catch (error) {
-            console.error('Error loading tasks:', error);
+            console.warn('Error loading tasks (API may not be ready):', error);
             tasks = [];
             renderKanban();
         }
