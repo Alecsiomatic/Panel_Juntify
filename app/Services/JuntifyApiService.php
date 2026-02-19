@@ -110,6 +110,73 @@ class JuntifyApiService
     }
 
     /**
+     * Obtener detalles de reunión usando endpoint DDU
+     * 
+     * @param int|string $meetingId ID de la reunión
+     * @param string $username Username del usuario
+     * @return array
+     */
+    public function getDduMeetingDetails(string $meetingId, string $username): array
+    {
+        try {
+            // Construir headers de autenticación si están configurados
+            $headers = [];
+            $apiToken = env('JUNTIFY_API_TOKEN');
+            $panelId = env('JUNTIFY_PANEL_ID', 'panel_ddu');
+            
+            if ($apiToken) {
+                $headers['Authorization'] = 'Bearer ' . $apiToken;
+            }
+            $headers['X-Panel-ID'] = $panelId;
+            
+            $response = Http::timeout(30)
+                ->withHeaders($headers)
+                ->get(
+                    "{$this->baseUrl}/ddu/meetings/{$meetingId}",
+                    ['username' => $username]
+                );
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json()
+                ];
+            }
+
+            if ($response->status() === 404) {
+                return [
+                    'success' => false,
+                    'error' => 'Reunión no encontrada',
+                    'status' => 404
+                ];
+            }
+
+            Log::warning('Error al obtener detalles DDU de reunión', [
+                'meeting_id' => $meetingId,
+                'username' => $username,
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'Error al obtener detalles de la reunión',
+                'status' => $response->status()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Excepción al obtener detalles DDU: ' . $e->getMessage(), [
+                'meeting_id' => $meetingId
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => 'Error de conexión con Juntify: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Obtener detalles completos de una reunión (con permisos)
      * 
      * @param string $meetingId UUID de la reunión

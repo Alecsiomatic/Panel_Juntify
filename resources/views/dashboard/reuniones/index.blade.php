@@ -733,6 +733,16 @@
                                 <span>Transcripción</span>
                             </div>
                         </button>
+                        <button type="button"
+                                class="tab-button py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+                                data-tab="tareas">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                                </svg>
+                                <span>Tareas</span>
+                            </div>
+                        </button>
                     </nav>
                 </div>
 
@@ -790,6 +800,19 @@
                                 Transcripción Completa
                             </h3>
                             <div id="modal-segments" class="space-y-4 max-h-96 overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña 4: Tareas -->
+                    <div id="tab-tareas" class="tab-pane" style="display: none;">
+                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                                </svg>
+                                Tareas Identificadas
+                            </h3>
+                            <ul id="modal-tasks" class="space-y-3"></ul>
                         </div>
                     </div>
                 </div>
@@ -1726,6 +1749,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const audioPlayerEl = document.getElementById('modal-audio-player');
     const keyPointsEl = document.getElementById('modal-key-points');
     const segmentsEl = document.getElementById('modal-segments');
+    const tasksEl = document.getElementById('modal-tasks');
 
     const resetModalContent = () => {
         if (summaryEl) {
@@ -1750,6 +1774,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (segmentsEl) {
             segmentsEl.innerHTML = '';
+        }
+
+        if (tasksEl) {
+            tasksEl.innerHTML = '';
         }
     };
 
@@ -1826,6 +1854,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 emptyMessage.className = 'text-sm text-gray-500';
                 emptyMessage.textContent = 'No hay transcripción disponible.';
                 segmentsEl.appendChild(emptyMessage);
+            }
+        }
+
+        if (tasksEl) {
+            tasksEl.innerHTML = '';
+
+            if (Array.isArray(data.tasks) && data.tasks.length > 0) {
+                data.tasks.forEach((task) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start space-x-3 p-3 bg-white rounded-lg shadow-sm border border-amber-100';
+
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'flex-shrink-0 w-5 h-5 mt-0.5 border-2 border-amber-400 rounded';
+                    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'flex-1';
+
+                    const title = typeof task === 'object' && task !== null
+                        ? (task.title || task.description || task.task || task.text || '')
+                        : String(task || '');
+
+                    const responsible = typeof task === 'object' && task !== null
+                        ? (task.responsible || task.assignee || task.assigned_to || '')
+                        : '';
+
+                    const titleEl = document.createElement('p');
+                    titleEl.className = 'text-gray-800 font-medium';
+                    titleEl.textContent = title || 'Tarea sin descripción';
+                    contentDiv.appendChild(titleEl);
+
+                    if (responsible) {
+                        const responsibleEl = document.createElement('p');
+                        responsibleEl.className = 'text-sm text-gray-500 mt-1';
+                        responsibleEl.textContent = 'Responsable: ' + responsible;
+                        contentDiv.appendChild(responsibleEl);
+                    }
+
+                    li.appendChild(checkbox);
+                    li.appendChild(contentDiv);
+                    tasksEl.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.className = 'text-sm text-gray-500';
+                li.textContent = 'No se identificaron tareas en esta reunión.';
+                tasksEl.appendChild(li);
             }
         }
 
