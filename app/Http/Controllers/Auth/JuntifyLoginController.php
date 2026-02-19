@@ -30,7 +30,8 @@ class JuntifyLoginController extends Controller
 
         try {
             // Validar contra el endpoint de Juntify
-            $response = Http::timeout(10)->post('http://127.0.0.1:8000/api/auth/validate-user', [
+            $juntifyApiUrl = env('JUNTIFY_API_URL', 'https://juntify.com/api');
+            $response = Http::timeout(10)->post("{$juntifyApiUrl}/auth/validate-user", [
                 'email' => $request->email,
                 'password' => $request->password,
                 'nombre_empresa' => 'DDU'

@@ -14,7 +14,7 @@ class JuntifyApiService
 
     public function __construct()
     {
-        $this->baseUrl = env('JUNTIFY_API_URL', 'http://127.0.0.1:8000/api');
+        $this->baseUrl = env('JUNTIFY_API_URL', 'https://juntify.com/api');
     }
 
     /**
