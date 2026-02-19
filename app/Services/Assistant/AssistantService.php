@@ -8,6 +8,7 @@ use App\Models\AssistantMessage;
 use App\Models\User;
 use App\Services\Assistant\JuntifyConversationAdapter;
 use App\Services\Calendar\GoogleCalendarService;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -200,10 +201,11 @@ class AssistantService
             $base .= "\n\nContexto disponible:\n" . $context;
         }
 
+        $currentYear = Carbon::now()->year;
         $base .= "\n\nCuando el usuario solicite agendar una reunión o evento:\n" .
                  "1. SIEMPRE revisa la FECHA Y HORA ACTUAL en el contexto proporcionado\n" .
                  "2. Calcula correctamente fechas relativas (mañana, pasado mañana, etc.)\n" .
-                 "3. NUNCA uses años anteriores - SIEMPRE usa el año actual (2025)\n" .
+                 "3. NUNCA uses años anteriores - SIEMPRE usa el año actual ({$currentYear})\n" .
                  "4. Utiliza la función de programación para crear el evento en Google Calendar";
 
         return $base;
@@ -216,7 +218,7 @@ class AssistantService
                 'type' => 'function',
                 'function' => [
                     'name' => 'schedule_calendar_event',
-                    'description' => 'Programa un evento en el Google Calendar del usuario. IMPORTANTE: Siempre utiliza el año actual (2025) y calcula fechas relativas basándote en la fecha actual proporcionada en el contexto.',
+                    'description' => 'Programa un evento en el Google Calendar del usuario. IMPORTANTE: Siempre utiliza el año actual (' . Carbon::now()->year . ') y calcula fechas relativas basándote en la fecha actual proporcionada en el contexto.',
                     'parameters' => [
                         'type' => 'object',
                         'properties' => [
@@ -226,11 +228,11 @@ class AssistantService
                             ],
                             'start' => [
                                 'type' => 'string',
-                                'description' => 'Fecha y hora de inicio en formato ISO 8601 (ej: 2025-10-31T11:00:00-06:00). DEBE usar el año actual 2025.',
+                                'description' => 'Fecha y hora de inicio en formato ISO 8601 (ej: ' . Carbon::now()->year . '-10-31T11:00:00-06:00). DEBE usar el año actual ' . Carbon::now()->year . '.',
                             ],
                             'end' => [
                                 'type' => 'string',
-                                'description' => 'Fecha y hora de finalización en formato ISO 8601 (ej: 2025-10-31T12:00:00-06:00). DEBE usar el año actual 2025.',
+                                'description' => 'Fecha y hora de finalización en formato ISO 8601 (ej: ' . Carbon::now()->year . '-10-31T12:00:00-06:00). DEBE usar el año actual ' . Carbon::now()->year . '.',
                             ],
                             'description' => [
                                 'type' => 'string',
