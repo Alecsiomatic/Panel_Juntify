@@ -17,6 +17,13 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
+     * The database connection that should be used by the model.
+     *
+     * @var string
+     */
+    protected $connection = 'juntify';
+
+    /**
      * Indicates if the model's ID is auto-incrementing.
      *
      * @var bool
