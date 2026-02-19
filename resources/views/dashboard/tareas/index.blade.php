@@ -1,8 +1,9 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Tareas - Panel DDU')
+@section('page-title', 'Tareas')
+@section('page-description', 'Gestiona y organiza tus tareas de reuniones')
 
-@section('styles')
+@push('styles')
 <style>
     /* Apple-inspired design with DDU theme */
     :root {
@@ -764,7 +765,7 @@
         }
     }
 </style>
-@endsection
+@endpush
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
@@ -977,7 +978,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // State
@@ -1476,4 +1477,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+@endpush
